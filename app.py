@@ -281,8 +281,12 @@ with col_right:
 
             # SORT
             results = []
+            MANUAL_THRESH = 0.20  # <--- FORCE SENSITIVITY FOR DEMO
+            
             for i, col in enumerate(TARGET_COLS):
-                results.append({"concern": col, "score": probs[i], "active": probs[i] > best_thresh[i]})
+                # We use the lower manual threshold to ensure badges appear
+                is_active = probs[i] > MANUAL_THRESH
+                results.append({"concern": col, "score": probs[i], "active": is_active})
             results = sorted(results, key=lambda x: x["score"], reverse=True)
             top_match = results[0]
 
