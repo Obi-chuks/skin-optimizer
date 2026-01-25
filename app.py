@@ -1,4 +1,3 @@
-
 import streamlit as st
 import joblib
 import pandas as pd
@@ -12,6 +11,11 @@ import nltk
 
 # --- CONFIG ---
 st.set_page_config(page_title="L'Oréal Skin AI", layout="centered")
+
+# --- 1. DEFINE THE MISSING FUNCTION (CRITICAL FIX) ---
+# This must exist here so the model can find it when loading
+def simple_tokenizer(text):
+    return text.split()
 
 # --- LOAD RESOURCES ---
 @st.cache_resource
