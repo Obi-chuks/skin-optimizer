@@ -10,10 +10,29 @@ from nltk.tokenize import word_tokenize
 import nltk
 
 # --- CONFIG ---
-st.set_page_config(page_title="L'Oréal Skin AI", layout="centered")
+st.set_page_config(page_title="L'Oréal Skin AI", page_icon="🧪", layout="centered")
 
-# --- 1. DEFINE THE MISSING FUNCTION (CRITICAL FIX) ---
-# This must exist here so the model can find it when loading
+# --- CUSTOM CSS FOR "PREMIUM" LOOK ---
+st.markdown("""
+<style>
+    .metric-card {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+    }
+    .highlight-box {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #c3e6cb;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 1. DEFINE THE TOKENIZER FUNCTION (CRITICAL) ---
 def simple_tokenizer(text):
     return text.split()
 
@@ -42,7 +61,7 @@ try:
     TARGET_COLS = assets['target_cols']
     lemmatizer = WordNetLemmatizer()
 except FileNotFoundError:
-    st.error("⚠️ deployment_pack.pkl not found!")
+    st.error("⚠️ deployment_pack.pkl not found! Please upload it to GitHub.")
     st.stop()
 
 # --- PREPROCESSING ---
@@ -103,28 +122,61 @@ def process_input(raw_text):
     X_eng = scaler.transform(df_feats)
     return hstack([X_tf, X_eng])
 
-# --- UI ---
+def find_ingredients(text):
+    # Simple keyword search for display purposes
+    ingredients = {
+        "Salicylic Acid": ["salicylic", "bha"],
+        "Retinol": ["retinol", "retinoid"],
+        "Vitamin C": ["vitamin c", "ascorbic"],
+        "Hyaluronic Acid": ["hyaluronic", "sodium hyaluronate"],
+        "Niacinamide": ["niacinamide"],
+        "Glycerin": ["glycerin"],
+        "SPF": ["spf", "sunscreen"],
+        "Clay": ["clay", "kaolin", "charcoal"]
+    }
+    found = []
+    text_lower = text.lower()
+    for name, keywords in ingredients.items():
+        if any(k in text_lower for k in keywords):
+            found.append(name)
+    return found
+
+# --- UI LAYOUT ---
 st.title("🧪 L'Oréal Skincare Optimizer")
-st.caption("AI-Powered Multi-Label Classification System")
+st.markdown("### Intelligent Product Composition Analysis")
+st.caption("Paste any product description below to detect its target skin concerns and key ingredients.")
 
 input_text = st.text_area("Product Description:", height=150, 
-                         placeholder="e.g. La Roche-Posay Effaclar Serum with Salicylic Acid...")
+                         placeholder="Paste text here (e.g., 'La Roche-Posay Effaclar Medicated Gel Cleanser...')")
 
-if st.button("Analyze Product", type="primary"):
+if st.button("Analyze Product DNA", type="primary"):
     if input_text:
-        with st.spinner("Analyzing chemical composition..."):
+        with st.spinner("Decoding formula..."):
+            # 1. Run Model
             X_input = process_input(input_text)
             probs = model.predict_proba(X_input)[0]
+            
+            # 2. Get Ingredients
+            found_ingredients = find_ingredients(input_text)
 
-            st.subheader("Results")
-            cols = st.columns(len(TARGET_COLS))
+            # 3. Sort Results
+            results = []
             for i, col in enumerate(TARGET_COLS):
-                score = probs[i]
-                is_active = score > best_thresh[i]
-                with cols[i]:
-                    if is_active:
-                        st.metric(col.upper(), f"{score:.0%}", delta="Detected")
-                    else:
-                        st.metric(col.upper(), f"{score:.0%}", delta_color="off")
-    else:
-        st.warning("Please enter text first.")
+                results.append({"concern": col, "score": probs[i], "active": probs[i] > best_thresh[i]})
+            
+            # Sort by score descending
+            results = sorted(results, key=lambda x: x["score"], reverse=True)
+            top_match = results[0]
+
+            # --- RESULT DISPLAY ---
+            
+            # A. The "Headline" Result
+            st.divider()
+            if top_match["score"] > 0.4:
+                st.success(f"✅ **Primary Match: {top_match['concern'].upper()}** ({top_match['score']:.1%})")
+            else:
+                st.warning("⚠️ **Low Confidence:** This product description is vague.")
+
+            # B. Ingredient Spotlight
+            if found_ingredients:
+                st.markdown
