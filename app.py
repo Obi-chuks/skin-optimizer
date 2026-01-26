@@ -250,7 +250,7 @@ with col_right:
 
             st.markdown("### 📊 DIAGNOSTIC RESULTS")
 
-            if top_match['score'] > 0.4 and top_match['active']:
+            if top_match['score'] > 0.2 and top_match['active']:
                 verdict_color = "#004d2c"; verdict_text = top_match['concern']
             else:
                 verdict_color = "#856404"; verdict_text = "INCONCLUSIVE"
