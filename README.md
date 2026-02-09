@@ -84,6 +84,3 @@ The model is saved as a `deployment_pack.pkl` (approx. 15.8MB), making it ideal 
 * **Ahmad**
 * **Elizaveta**
 
----
-
-**Would you like me to add a "How to Run" section with the specific terminal commands for this repository?**
